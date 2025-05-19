@@ -1,4 +1,9 @@
-from fastapi import FastAPI, Form, Request
+# FastAPI app for LINE Messaging API Webhook対応
+# エンドポイント: /line
+# POST形式のJSONで "place=桐生&race=1R" のpostback.dataを受け取る
+# テキストで予測結果を返す
+
+from fastapi import FastAPI, Request
 from fastapi.responses import PlainTextResponse
 import pandas as pd
 import torch
@@ -77,23 +82,22 @@ def extract_features(race_dict, df_player_scaled):
 
 @app.post("/line")
 async def line_webhook(request: Request):
-    form = await request.body()
-    form_data = form.decode()
-    parsed = parse_qs(form_data)
-
-    place = parsed.get("place", [None])[0]
-    race = parsed.get("race", [None])[0]
-
-    if not place or not race:
-        return PlainTextResponse("会場またはレース番号が指定されていません", status_code=400)
-
-    placeno = place_dict.get(place)
-    raceno = race_dict.get(race)
-
-    if not placeno or not raceno:
-        return PlainTextResponse("無効な会場名またはレース番号です", status_code=400)
-
     try:
+        body = await request.json()
+        event = body["events"][0]
+        postback_data = event.get("postback", {}).get("data", "")
+        parsed = parse_qs(postback_data)
+        place = parsed.get("place", [None])[0]
+        race = parsed.get("race", [None])[0]
+
+        if not place or not race:
+            return PlainTextResponse("会場またはレース番号が指定されていません", status_code=200)
+
+        placeno = place_dict.get(place)
+        raceno = race_dict.get(race)
+        if not placeno or not raceno:
+            return PlainTextResponse("無効な会場名またはレース番号です", status_code=200)
+
         today = time.strftime("%Y%m%d")
         url = f"https://www.boatrace.jp/owpc/pc/race/racelist?rno={raceno}&jcd={placeno}&hd={today}"
         res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -147,4 +151,4 @@ async def line_webhook(request: Request):
         return PlainTextResponse("\n".join(result_lines))
 
     except Exception as e:
-        return PlainTextResponse(f"サーバーエラー: {str(e)}", status_code=500)
+        return PlainTextResponse("サーバーエラーが発生しました", status_code=200)
