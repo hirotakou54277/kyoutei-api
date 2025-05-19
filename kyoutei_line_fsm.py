@@ -13,6 +13,8 @@ from urllib.parse import parse_qs
 
 app = FastAPI()
 
+user_place_map = {}  # user_id: place
+
 base_features = ["勝率", "複勝率", "平均スタートタイミング", "今期能力指数"]
 course_features = []
 for i in range(1, 7):
@@ -80,6 +82,40 @@ async def line_webhook(request: Request, background_tasks: BackgroundTasks):
     body = await request.json()
     try:
         event = body["events"][0]
+        user_id = event["source"]["userId"]
+        reply_token = event.get("replyToken", "")
+
+        # テキストで place+race を送ってきた場合
+        if event["type"] == "message" and event["message"]["type"] == "text":
+            msg = event["message"]["text"]
+            for place_key in place_dict:
+                if place_key in msg:
+                    for race_key in race_dict:
+                        if race_key in msg:
+                            background_tasks.add_task(
+                                process_prediction,
+                                f"place={place_key}&race={race_key}",
+                                reply_token
+                            )
+                            return PlainTextResponse("OK", status_code=200)
+
+        # postback: placeだけ → 記録 & メニュー切替
+        if "postback" in event and "data" in event["postback"]:
+            postback_data = event["postback"]["data"]
+            parsed = parse_qs(postback_data)
+            if "place" in parsed:
+                user_place_map[user_id] = parsed["place"][0]
+                return PlainTextResponse("✅ place記録", status_code=200)
+            elif "race" in parsed and user_id in user_place_map:
+                place = user_place_map[user_id]
+                race = parsed["race"][0]
+                background_tasks.add_task(
+                    process_prediction,
+                    f"place={place}&race={race}",
+                    reply_token
+                )
+                return PlainTextResponse("✅ 予測開始", status_code=200)
+
         postback_data = event.get("postback", {}).get("data", "")
         reply_token = event.get("replyToken", "")
         background_tasks.add_task(process_prediction, postback_data, reply_token)
