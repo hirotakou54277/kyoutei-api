@@ -47,9 +47,9 @@ class PredictRequest(BaseModel):
     race: str
 
 # 読み込み
-df_player_scaled = pd.read_csv("新競艇モデル保存/player_features.csv")
-scaler = joblib.load("新競艇モデル保存/scaler.pkl")
-name_encoder = joblib.load("新競艇モデル保存/name_encoder.pkl")
+df_player_scaled = pd.read_csv("model_data/player_features.csv")
+scaler = joblib.load("model_data/scaler.pkl")
+name_encoder = joblib.load("model_data/name_encoder.pkl")
 
 # 名前正規化
 def clean_name(name):
@@ -57,7 +57,7 @@ def clean_name(name):
 df_player_scaled["名前漢字"] = df_player_scaled["名前漢字"].apply(clean_name)
 
 # モデルロード
-def load_trained_model_auto(model_class, input_dim, model_path="新競艇モデル保存/model.pt"):
+def load_trained_model_auto(model_class, input_dim, model_path="model_data/model.pt"):
     state_dict = torch.load(model_path, map_location="cpu")
     emb_weight = state_dict["emb.weight"]
     name_count = emb_weight.shape[0]
