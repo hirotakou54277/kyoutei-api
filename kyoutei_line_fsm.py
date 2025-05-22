@@ -188,7 +188,7 @@ def process_prediction(postback_data: str, reply_token: str):
 
 def send_line_reply(reply_token, message_text):
     LINE_REPLY_ENDPOINT = "https://api.line.me/v2/bot/message/reply"
-    ACCESS_TOKEN = "c0ZHuOMZPfJQtbmhmNBnNiwvLnMJlmV/zSTVFZY2JSZL1YPw4IBrpeE063mhffNjes4ye611pNG2Xkv1/UEpaLs3uQqOMSBTLYs0fYnwrvrtw/n9hCoXeeXKG5nk2HLUjlFK23l1zEET5sfPKVU7IAdB04t89/1O/w1cDnyilFU="
+    ACCESS_TOKEN = "z+RWTC13imLrV5bVW3fRqLF3mwiTK4Ipupyfmix1zmAS9MX1mUBOPhUzoROX392res4ye611pNG2Xkv1/UEpaLs3uQqOMSBTLYs0fYnwrvq62wSRMwJKjVbjzpycs/6a6ZhHdyKJd6EAeEJ8RZZLxwdB04t89/1O/w1cDnyilFU="
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {ACCESS_TOKEN}"
